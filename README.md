@@ -1,12 +1,12 @@
-# AWS Space Invaders App
+# AWS Alien Attack App
 
-**DISCLAIMER:** AWS Space Invaders App, and all complementary resources are provided without any guarantees, and you're not recommended to use it for production-grade workloads. The intention is to provide content to build and learn.
+**DISCLAIMER:** AWS Alien Attack App, and all complementary resources are provided without any guarantees, and you're not recommended to use it for production-grade workloads. The intention is to provide content to build and learn.
 
 
 ## What is this?
-This is a space invaders game with serverless back-end based on AWS.
+This is a Alien Attack game with serverless back-end based on AWS.
 
-Before running it, you need to deploy the back-end, which is in the project [Space Invaders CDK](https://github.com/fabianmartins/spaceinvaders.cdk).
+Before running it, you need to deploy the back-end, which is in the project [Alien Attack CDK](https://github.com/fabianmartins/alienattack.cdk).
 
 After deploying the back-end, you need to update the file `./resources/js/aws-config` with the required data.
 

@@ -55,7 +55,7 @@
     var connectOptions = {
         onSuccess: function () {
             console.log('IoT Connected with success');
-            self.client.subscribe("SPACEINVADERS");
+            self.client.subscribe("ALIENATTACK");
         },
         useSSL: true,
         timeout: 3,

@@ -1,6 +1,6 @@
 const DEBUG = true;
 const AWS_CONFIG = {
-    "region" : undefined,
-    "API_ENDPOINT" : undefined,
-    "APPNAME" : undefined
+    "region" : "<region where the env is deployed>",
+    "API_ENDPOINT" : "<API Gateway invoke URL>/v1/",
+    "APPNAME" : "<name of the application>"
 }
