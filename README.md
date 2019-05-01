@@ -6,7 +6,7 @@
 ## What is this?
 This is a Alien Attack game with serverless back-end based on AWS.
 
-Before running it, you need to deploy the back-end, which is in the project [Alien Attack CDK](https://github.com/fabianmartins/alienattack.cdk).
+Before running it, you need to deploy the back-end, which can be created by following the instructions at [Alien Attack Workshop](https://github.com/fabianmartins/alienattack.workshop).
 
 After deploying the back-end, you need to update the file `./resources/js/aws-config` with the required data.
 
