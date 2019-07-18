@@ -95,6 +95,7 @@ class Scoreboard {
                             self.readSessionData(sessionData.SessionId, function (errddb, sessionDataFromDDB) {
                                 if (errddb) {
                                     console.log(errddb);
+                                    console.log("double check parameters in resources/js/awsconfig.js is UPPERCASE")
                                     alert(errddb);
                                 } else {
                                     if (!sessionDataFromDDB) {
