@@ -728,17 +728,24 @@ WaitForSessionState.prototype.playConnected = function() {
                     game.moveToState(new SessionErrorState(errorDetails));
                 } else {
                     game.session = self.session;
-                    // start the scoreboard (should this be here?)
-                    clearInterval(game.scoreboardInterval);
-                    game.scoreboardInterval = setInterval( function() {
-                        game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
-                            let scoreboard = [];
-                            if (err) console.log(err);
-                            else scoreboard = data;
-                            starfield.setScoreboard(scoreboard);
-                        })
-                    },2000);
-                    game.run();
+                    console.log(game.session);
+                    if (game.session.Synchronized) {
+                        game.moveToState(new WaitForManagerState(game));
+                    } else {
+                        // This is where we should move to a lobby if the session is synchronized.
+                        // start the scoreboard (should this be here?)
+                        clearInterval(game.scoreboardInterval);
+                        game.scoreboardInterval = setInterval( function() {
+                            game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                                let scoreboard = [];
+                                if (err) console.log(err);
+                                else scoreboard = data;
+                                starfield.setScoreboard(scoreboard);
+                            })
+                        },2000);
+                        game.run();
+                    }
+                    
                 }
             });
         }
@@ -780,6 +787,43 @@ WaitForSessionState.prototype.modalClose = function (msg) {
         }
     }
 }
+
+function WaitForManagerState(game) {
+    this.modal = new Modal(document.getElementById("modalDialog"));
+    var modalDialogString =
+        `<h2>AlienAttack:</h2>
+         <p><h3>Waiting for Manager to start Game</h3></p>
+        <br>`;
+    this.modal.show(modalDialogString, { actionOnClose: "game.modalClose('CLOSE')" });
+    let self = this;
+    this.webSocket = new WebSocket('wss://38smmv23c9.execute-api.us-east-1.amazonaws.com/development');
+    let payload = JSON.stringify({
+        'action': 'record-session',
+        'session': game.session.SessionId
+    });
+    this.webSocket.onopen = () => {
+        this.webSocket.send(payload);
+    }
+    this.webSocket.onmessage = (e) => {
+        console.log(e);
+        // Need a whole lot more error handling here
+        
+        if (e.data == 'start') {
+            this.modal.close();
+            clearInterval(game.scoreboardInterval);
+            game.scoreboardInterval = setInterval( function() {
+                game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                    let scoreboard = [];
+                    if (err) console.log(err);
+                    else scoreboard = data;
+                    starfield.setScoreboard(scoreboard);
+                })
+            },2000);
+            game.run();
+        }
+    };
+}
+
 
 function WelcomeState() {
     //this.wsclient = null;

@@ -283,6 +283,31 @@ class Scoreboard {
             { SessionId : xxxxx, Timestamp: '2018-07-12T13:43:08.024Z', Nickname: 'Jane', Lives: 3, Score: 150, Shoots: 50, Level: 1 },
             { SessionId : xxxxx,Timestamp: '2018-07-12T13:43:08.024Z', Nickname: 'Louise', Lives: 2, Score: 150, Shoots: 50, Level: 1 } 
         */
+
+       let synchronizeGameSessions = (session, callback) => {
+            this.webSocket = new WebSocket('wss://38smmv23c9.execute-api.us-east-1.amazonaws.com/development'); // Probably store this in ssm.
+            const ws = this.webSocket;
+            ws.onopen = () => {
+                console.log('open');
+                ws.send(JSON.stringify({
+                    "action": "record-session",
+                    "session": session
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                console.log(event);
+                // let message = JSON.parse(event.body);
+                // if (message.statusCode != 200) {
+                //     callback({
+                //         "errorMessage": message.errorMessage,
+                //         "errorCode": message.errorCode
+                //     });
+                // }
+                callback(); // Im not sure if there is anything else we should do here
+            };
+        };
+
         this.scoreboard = [];
         this.zeroedGamers = [];
         this.loopInterval = null;
@@ -292,8 +317,24 @@ class Scoreboard {
             if (err) console.log(err);
             else console.log('Session started:', sessionName);
         });
-        this.run();
+        console.log(gameTypeDetails);
+        if (gameTypeDetails.Synchronized && (gameTypeDetails.GameType == 'SINGLE_TRIAL' || gameTypeDetails.GameType == 'TIME_CONSTRAINED')) {
+            console.log('Starting synchro game')
+            synchronizeGameSessions(gameTypeDetails.SessionId, (err,_) => {
+               if (err) console.log(err);
+               else this.run(); // Is this the best way to format a callback?
+            });
+        } else this.run();
+
+        
     };
+
+    sync() {
+        console.log('About to start game');
+        this.webSocket.send(JSON.stringify({
+            'action': 'start-game'
+        }));
+    }
 
     stop() {
         clearInterval(this.loopInterval);

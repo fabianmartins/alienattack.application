@@ -65,6 +65,7 @@
     </div>
     <div id='StartStopButtons'>
         <button type='button' id='btnStartGame' class='button' onclick='startGame();'>START game</button>
+        <button type='button' id='btnSyncGame' class='button' onclick='syncGame()'>Sync Game</button>
         <button type='button' id='btnStopGame' class='button' onclick='stopGame();'>STOP game</button>
     </div>
     <div id='scoreboard' style="overflow-y: scroll; overflow-x: auto;" hidden></div>
@@ -161,6 +162,7 @@
             document.getElementById('CurrentSessionDetailsDiv').style.display = 'none';
             document.getElementById('btnStartGame').disabled = false;
             document.getElementById('btnStopGame').disabled = true;
+            document.getElementById('btnSyncGame').disabled = true;
             document.getElementById('fsGameTypeSelection').disabled = false;
             clearGameTypeSelectionGroup();
         }
@@ -185,6 +187,21 @@
             document.getElementById('txtSessionName').readOnly = true;
             document.getElementById('btnStartGame').disabled = true;
             document.getElementById('btnStopGame').disabled = false;
+            document.getElementById('btnSyncGame').disabled = true;
+            document.getElementById('CurrentSessionDetailsDiv').style.display = 'none';
+        }
+
+        displayPageAfterGameStartSynchro = function () {
+            document.getElementById('TimerDiv').style.display = 'none';
+            document.getElementById('LoginDiv').style.display = 'none';
+            document.getElementById('SessionNameDiv').style.display = 'block';
+            document.getElementById('GameTypeSelectionDiv').style.display = 'none';
+            document.getElementById('StartStopButtons').style.display = 'block';
+            document.getElementById('scoreboard').style.display = 'block';
+            document.getElementById('txtSessionName').readOnly = true;
+            document.getElementById('btnStartGame').disabled = true;
+            document.getElementById('btnStopGame').disabled = false;
+            document.getElementById('btnSyncGame').disabled = false;
             document.getElementById('CurrentSessionDetailsDiv').style.display = 'none';
         }
 
@@ -199,6 +216,7 @@
             document.getElementById('txtSessionName').value = '';
             document.getElementById('btnStartGame').disabled = false;
             document.getElementById('btnStopGame').disabled = true;
+            document.getElementById('btnSyncGame').disabled = true;
             // Update session details
             document.getElementById('CurrentSessionDetailsDiv').style.display = 'block';
             let currentSession = Scoreboard.getCurrentSession()
@@ -281,9 +299,16 @@
                 gameTypeDetails.SessionId = sessionName;
                 document.getElementById('txtSessionName').value = sessionName;
                 Scoreboard.start(gameTypeDetails);
-                displayPageAfterGameStart();
+                if (gameTypeDetails.Synchronized) displayPageAfterGameStartSynchro();
+                else displayPageAfterGameStart();
             } else alert('Please choose the game type');
         };
+
+        syncGame = function () {
+            Scoreboard.sync();
+            console.log('message sent')
+            displayPageAfterGameStart();
+        }
 
         stopGame = function () {
             Scoreboard.stop();
