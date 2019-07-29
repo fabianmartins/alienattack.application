@@ -283,31 +283,26 @@ class Scoreboard {
             { SessionId : xxxxx, Timestamp: '2018-07-12T13:43:08.024Z', Nickname: 'Jane', Lives: 3, Score: 150, Shoots: 50, Level: 1 },
             { SessionId : xxxxx,Timestamp: '2018-07-12T13:43:08.024Z', Nickname: 'Louise', Lives: 2, Score: 150, Shoots: 50, Level: 1 } 
         */
-
-       let synchronizeGameSessions = (session, callback) => {
-            this.webSocket = new WebSocket('wss://38smmv23c9.execute-api.us-east-1.amazonaws.com/development'); // Probably store this in ssm.
-            const ws = this.webSocket;
-            ws.onopen = () => {
-                console.log('open');
-                ws.send(JSON.stringify({
-                    "action": "record-session",
-                    "session": session
-                }));
+        let self = this;
+        let synchronizeGameSessions = function(session, callback) {
+            let listeners = {
+                messageCallback: (event) => {
+                    console.log(event);
+                    // let message = JSON.parse(event.body);
+                    // if (message.statusCode != 200) {
+                    //     callback({
+                    //         "errorMessage": message.errorMessage,
+                    //         "errorCode": message.errorCode
+                    //     });
+                    // }
+                    callback(); // Im not sure if there is anything else we should do here
+                },
+                openCallback: () => {
+                    console.log('open');
+                }
             };
-
-            ws.onmessage = (event) => {
-                console.log(event);
-                // let message = JSON.parse(event.body);
-                // if (message.statusCode != 200) {
-                //     callback({
-                //         "errorMessage": message.errorMessage,
-                //         "errorCode": message.errorCode
-                //     });
-                // }
-                callback(); // Im not sure if there is anything else we should do here
-            };
-        };
-
+            self.webSocket = new ApiGatewayWebSocket(self.awsfacade, listeners);
+        }            
         this.scoreboard = [];
         this.zeroedGamers = [];
         this.loopInterval = null;
@@ -331,9 +326,9 @@ class Scoreboard {
 
     sync() {
         console.log('About to start game');
-        this.webSocket.send(JSON.stringify({
+        this.webSocket.sendMessage({
             'action': 'start-game'
-        }));
+        });
     }
 
     stop() {

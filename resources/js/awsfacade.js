@@ -161,6 +161,12 @@ class AWSFacade {
                 "AuthorizationRequired": true
             },
             {
+                "Resource": "websocket",
+                "Method": "GET",
+                "URL": config.API_ENDPOINT + "websocket",
+                "AuthorizationRequired": true
+            },
+            {
                 "Resource": "scoreboard",
                 "Method": "GET",
                 "URL": config.API_ENDPOINT + "scoreboard",
@@ -345,6 +351,20 @@ class AWSFacade {
         }, true);
     }
 
+    getWebSocketEndpoint(callback) {
+        let request = {
+            "Resource": "websocket"
+        };
+        this.makeAPIGatewayRequest(request, (err, data) => {
+            if (err) {
+                callback(err, data);
+            } else {
+                let res = JSON.parse(data);
+                if (typeof res == 'string') res = JSON.parse(res);
+                callback(null, res);
+            }
+        })
+    }
 
     getSession(callback) {
         let request = {
