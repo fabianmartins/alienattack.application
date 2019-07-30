@@ -730,7 +730,8 @@ WaitForSessionState.prototype.playConnected = function() {
                     game.session = self.session;
                     console.log(game.session);
                     if (game.session.Synchronized) {
-                        game.moveToState(new WaitForManagerState(game));
+                        if (game.session.SynchronizeTime) game.moveToState(new LateStartWarning(game));
+                        else game.moveToState(new WaitForManagerState(game));
                     } else {
                         // This is where we should move to a lobby if the session is synchronized.
                         // start the scoreboard (should this be here?)
@@ -788,12 +789,50 @@ WaitForSessionState.prototype.modalClose = function (msg) {
     }
 }
 
+function LateStartWarning(game) {
+    this.modal = new Modal(document.getElementById("modalDialog"));
+    var modalDialogString = 
+        `<h2>AlienAttack:</h2>
+        <p><h3>The game has already begun, do you still wish to join?</h3><p>
+        <br>
+        <input type="button" class="button" value="AGREE" onclick="game.modalClose('JOIN_SESSION')"/>`
+    this.modal.show(modalDialogString, { actionOnClose: "game.modalClose('CLOSE')" });
+}
+
+LateStartWarning.prototype.modalClose = function(msg) {
+    switch(msg) {
+        case "JOIN_SESSION":
+            this.playConnected();
+        break;
+        case "CLOSE":
+            game.moveToState(new WaitForSessionState());
+        break;
+    }
+}
+
+LateStartWarning.prototype.playConnected = function() {
+    console.log("about to play")
+    this.modal.close(() => {
+        clearInterval(game.scoreboardInterval);
+        game.scoreboardInterval = setInterval( function() {
+            game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                let scoreboard = [];
+                if (err) console.log(err);
+                else scoreboard = data;
+                starfield.setScoreboard(scoreboard);
+            })
+        },2000);
+        game.run();
+    })
+}
+
 function WaitForManagerState(game) {
     this.modal = new Modal(document.getElementById("modalDialog"));
     var modalDialogString =
         `<h2>AlienAttack:</h2>
-         <p><h3>Waiting for Manager to start Game</h3></p>
-        <br>`;
+        <p><h3>Waiting for Manager to start Game</h3></p>
+        <br>
+        <input type="button" class="button" value="Play Alone" onclick="game.modalClose('PLAY_ALONE')"/>`;
     this.modal.show(modalDialogString, { actionOnClose: "game.modalClose('CLOSE')" });
     let self = this;
     let listeners = {
@@ -820,6 +859,26 @@ function WaitForManagerState(game) {
     
 }
 
+WaitForManagerState.prototype.modalClose = function(msg) {
+    switch(msg) {
+        case 'PLAY_ALONE':
+            this.webSocket.close();
+            this.playAlone();
+        break;
+        case 'CLOSE':
+            game.moveToState(new WaitForSessionState());
+        break;
+    }
+}
+
+WaitForManagerState.prototype.playAlone = function() {
+    this.modal.close( () => {
+        game.session = null;
+        starfield.setScoreboard([]);
+        clearInterval(game.scoreboardInterval);
+        game.run();
+    });
+}
 
 function WelcomeState() {
     //this.wsclient = null;

@@ -5,20 +5,25 @@ function ApiGatewayWebSocket(awsFacade, websocketCallbacks) {
     this.messageCallback = websocketCallbacks.messageCallback;
     this.closeCallback = websocketCallbacks.closeCallback;
     this.errorCallback = websocketCallbacks.errorCallback;
-    console.log(this.messageCallback);
     let self = this;
+    this.URL = null;
     awsFacade.getWebSocketEndpoint((err, data) => {
         if (err) {
             console.log('Error', err);
         } else {
             console.log('Success getting websocket URL', data);
-            URL = data.GetParameterResponse.GetParameterResult.Parameter.Value;
-            self.ws = new WebSocket(URL);
+            self.URL = data.GetParameterResponse.GetParameterResult.Parameter.Value;
+            self.ws = new WebSocket(self.URL);
             self.ws.onmessage = ApiGatewayWebSocket.prototype.onMessageListener.bind(self);
             self.ws.onclose = ApiGatewayWebSocket.prototype.onCloseListener.bind(self);
             self.ws.onerror = ApiGatewayWebSocket.prototype.onErrorListener.bind(self);
+            ApiGatewayWebSocket.prototype.setURL(self.URL);
         }
     });
+}
+
+ApiGatewayWebSocket.prototype.setURL = function(URL) {
+    this.URL = URL;
 }
 
 ApiGatewayWebSocket.prototype.onMessageListener = function(message) {
@@ -38,4 +43,19 @@ ApiGatewayWebSocket.prototype.sendMessage = function(message) {
         if (message.action)
             this.ws.send(JSON.stringify(message));
     }
+}
+
+ApiGatewayWebSocket.prototype.close = function() {
+    this.ws.close();
+}
+
+ApiGatewayWebSocket.prototype.isOpen = function() {
+    return this.ws != null;
+}
+
+ApiGatewayWebSocket.prototype.reConnect = function() {
+    this.ws = new WebSocket(this.URL);
+    this.ws.onmessage = ApiGatewayWebSocket.prototype.onMessageListener.bind(this);
+    this.ws.onclose = ApiGatewayWebSocket.prototype.onCloseListener.bind(this);
+    this.ws.onerror = ApiGatewayWebSocket.prototype.onErrorListener.bind(this);
 }

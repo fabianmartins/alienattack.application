@@ -288,20 +288,29 @@ class Scoreboard {
             let listeners = {
                 messageCallback: (event) => {
                     console.log(event);
-                    // let message = JSON.parse(event.body);
-                    // if (message.statusCode != 200) {
-                    //     callback({
-                    //         "errorMessage": message.errorMessage,
-                    //         "errorCode": message.errorCode
-                    //     });
-                    // }
-                    callback(); // Im not sure if there is anything else we should do here
+                    if (event.data != 'start') console.alert("Unknown Message received through websocket: ", event);
+                    else console.info("Success sending messages");
                 },
                 openCallback: () => {
                     console.log('open');
+                },
+                closeCallback: (event) => {
+                    console.log(event);
+                    if (event.code == 1001) {
+                        ApiGatewayWebSocket.prototype.reConnect();
+                    }
+                },
+                errorCallback: (event) => {
+                    console.log(event);
                 }
             };
-            self.webSocket = new ApiGatewayWebSocket(self.awsfacade, listeners);
+            self.webSocket = new ApiGatewayWebSocket(self.awsfacade, listeners, function(err,_) {
+                if (err) {
+                    console.err('Error creating websocket: ', err);
+                    callback(err);
+                } else callback();
+                
+            });
         }            
         this.scoreboard = [];
         this.zeroedGamers = [];
@@ -316,8 +325,11 @@ class Scoreboard {
         if (gameTypeDetails.Synchronized && (gameTypeDetails.GameType == 'SINGLE_TRIAL' || gameTypeDetails.GameType == 'TIME_CONSTRAINED')) {
             console.log('Starting synchro game')
             synchronizeGameSessions(gameTypeDetails.SessionId, (err,_) => {
-               if (err) console.log(err);
-               else this.run(); // Is this the best way to format a callback?
+               if (err) {
+                   console.error(err);
+               } else {
+                   this.run();
+                } // Is this the best way to format a callback?
             });
         } else this.run();
 
@@ -325,10 +337,11 @@ class Scoreboard {
     };
 
     sync() {
-        console.log('About to start game');
-        this.webSocket.sendMessage({
-            'action': 'start-game'
-        });
+        if (this.webSocket != null && this.webSocket.isOpen()) {
+            this.webSocket.sendMessage({
+                'action': 'start-game'
+            });
+        } else console.error(new Error('Websocket not Open'));
     }
 
     stop() {
