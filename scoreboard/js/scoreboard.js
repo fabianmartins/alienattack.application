@@ -287,21 +287,14 @@ class Scoreboard {
         let synchronizeGameSessions = function(session, callback) {
             let listeners = {
                 messageCallback: (event) => {
-                    console.log(event);
                     if (event.data != 'start') console.alert("Unknown Message received through websocket: ", event);
                     else console.info("Success sending messages");
-                },
-                openCallback: () => {
-                    console.log('open');
                 },
                 closeCallback: (event) => {
                     console.log(event);
                     if (event.code == 1001) {
                         ApiGatewayWebSocket.prototype.reConnect();
                     }
-                },
-                errorCallback: (event) => {
-                    console.log(event);
                 }
             };
             self.webSocket = new ApiGatewayWebSocket(self.awsfacade, listeners, function(err,_) {
@@ -321,19 +314,12 @@ class Scoreboard {
             if (err) console.log(err);
             else console.log('Session started:', sessionName);
         });
-        console.log(gameTypeDetails);
         if (gameTypeDetails.Synchronized && (gameTypeDetails.GameType == 'SINGLE_TRIAL' || gameTypeDetails.GameType == 'TIME_CONSTRAINED')) {
-            console.log('Starting synchro game')
             synchronizeGameSessions(gameTypeDetails.SessionId, (err,_) => {
-               if (err) {
-                   console.error(err);
-               } else {
-                   this.run();
-                } // Is this the best way to format a callback?
+               if (err) console.error(err);
+               else this.run();
             });
         } else this.run();
-
-        
     };
 
     sync() {

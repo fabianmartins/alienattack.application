@@ -1,7 +1,7 @@
 
 
 
-function ApiGatewayWebSocket(awsFacade, websocketCallbacks) {
+function ApiGatewayWebSocket(awsFacade, websocketCallbacks, callback) {
     this.messageCallback = websocketCallbacks.messageCallback;
     this.closeCallback = websocketCallbacks.closeCallback;
     this.errorCallback = websocketCallbacks.errorCallback;
@@ -10,6 +10,7 @@ function ApiGatewayWebSocket(awsFacade, websocketCallbacks) {
     awsFacade.getWebSocketEndpoint((err, data) => {
         if (err) {
             console.log('Error', err);
+            if (callback) callback(err);
         } else {
             console.log('Success getting websocket URL', data);
             self.URL = data.GetParameterResponse.GetParameterResult.Parameter.Value;
@@ -20,6 +21,7 @@ function ApiGatewayWebSocket(awsFacade, websocketCallbacks) {
             ApiGatewayWebSocket.prototype.setURL(self.URL);
         }
     });
+    if (callback) callback();
 }
 
 ApiGatewayWebSocket.prototype.setURL = function(URL) {

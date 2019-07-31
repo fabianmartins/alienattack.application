@@ -730,7 +730,7 @@ WaitForSessionState.prototype.playConnected = function() {
                     game.session = self.session;
                     console.log(game.session);
                     if (game.session.Synchronized) {
-                        if (game.session.SynchronizeTime) game.moveToState(new LateStartWarning(game));
+                        if (game.session.SynchronizeTime) game.moveToState(new LateStartWarning());
                         else game.moveToState(new WaitForManagerState(game));
                     } else {
                         // This is where we should move to a lobby if the session is synchronized.
@@ -789,7 +789,7 @@ WaitForSessionState.prototype.modalClose = function (msg) {
     }
 }
 
-function LateStartWarning(game) {
+function LateStartWarning() {
     this.modal = new Modal(document.getElementById("modalDialog"));
     var modalDialogString = 
         `<h2>AlienAttack:</h2>
@@ -834,29 +834,18 @@ function WaitForManagerState(game) {
         <br>
         <input type="button" class="button" value="Play Alone" onclick="game.modalClose('PLAY_ALONE')"/>`;
     this.modal.show(modalDialogString, { actionOnClose: "game.modalClose('CLOSE')" });
-    let self = this;
-    let listeners = {
-        messageCallback: (e) => {
-            console.log(e);
-            // Need a whole lot more error handling here
-            
-            if (e.data == 'start') {
-                self.modal.close();
-                clearInterval(game.scoreboardInterval);
-                game.scoreboardInterval = setInterval( function() {
-                    game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
-                        let scoreboard = [];
-                        if (err) console.log(err);
-                        else scoreboard = data;
-                        starfield.setScoreboard(scoreboard);
-                    })
-                },2000);
-                game.run();
-            }
-        }
-    };
+    let listeners = { messageCallback: WaitForManagerState.prototype.onMessageFromWebSocket.bind(this),
+                    closeCallback: WaitForManagerState.prototype.onCloseWebsocket.bind(this) };
     this.webSocket = new ApiGatewayWebSocket(game.awsfacade, listeners);
-    
+    let status = {
+        'score': 0,
+        'lives': 3,
+        'shots': 0,
+        'level': 1
+    }
+    game.publishStatus(function(err, _) {
+        if (err) console.log(err);
+    });
 }
 
 WaitForManagerState.prototype.modalClose = function(msg) {
@@ -878,6 +867,29 @@ WaitForManagerState.prototype.playAlone = function() {
         clearInterval(game.scoreboardInterval);
         game.run();
     });
+}
+
+WaitForManagerState.prototype.onMessageFromWebSocket = function(message) {
+    // Need a whole lot more error handling here
+    if (message.data == 'start') {
+        this.modal.close();
+        clearInterval(game.scoreboardInterval);
+        game.scoreboardInterval = setInterval( function() {
+            game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                let scoreboard = [];
+                if (err) console.log(err);
+                else scoreboard = data;
+                starfield.setScoreboard(scoreboard);
+            })
+        },2000);
+        game.run();
+    }
+}
+
+WaitForManagerState.prototype.onCloseWebsocket = function() {
+    if (event.code == 1001) {
+        this.webSocket.reConnect();
+    } else console.log('WebSocket Closed');
 }
 
 function WelcomeState() {

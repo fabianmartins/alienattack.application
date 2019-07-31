@@ -42,6 +42,7 @@ class ScoreboardKinesis extends Scoreboard {
  * @param {*} records 
  */
     async updateScoreboard(records) {
+        console.log("Updating scoreboard")
         // activating semaphore for updates
         this.updateHasFinished = false;
         // because for every reading you can get many different records from the same user
