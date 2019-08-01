@@ -275,7 +275,7 @@ class Scoreboard {
     }
 
 
-    start(gameTypeDetails) {
+    start(gameTypeDetails, callback) {
         /*  
             { SessionId : xxxxx, Timestamp: '2018-07-12T13:43:08.024Z', Nickname: 'John', Lives: 3, Score: 150, Shoots: 5, Level: 1 },
             { SessionId : xxxxx,Timestamp: '2018-07-12T13:43:08.024Z', Nickname: 'Mary', Lives: 2, Score: 125, Shoots: 5, Level: 1 },
@@ -299,27 +299,27 @@ class Scoreboard {
             };
             self.webSocket = new ApiGatewayWebSocket(self.awsfacade, listeners, function(err,_) {
                 if (err) {
-                    console.err('Error creating websocket: ', err);
+                    console.log('Error creating websocket: ', err);
                     callback(err);
                 } else callback();
-                
             });
         }            
         this.scoreboard = [];
         this.zeroedGamers = [];
         this.loopInterval = null;
+        if (gameTypeDetails.Synchronized && (gameTypeDetails.GameType == 'SINGLE_TRIAL' || gameTypeDetails.GameType == 'TIME_CONSTRAINED')) {
+            synchronizeGameSessions(gameTypeDetails.SessionId, (err,_) => {
+                if (err && callback) callback(null, false);//callback(false); // Maybe add some sort of modal or something to notify the websocket doesnt work
+                else if(callback) callback(null, true); 
+            });
+        }
         this.updateTable();
         this.currentSession = gameTypeDetails;
         this.recordSessionStart(function (err, sessionName) {
             if (err) console.log(err);
             else console.log('Session started:', sessionName);
         });
-        if (gameTypeDetails.Synchronized && (gameTypeDetails.GameType == 'SINGLE_TRIAL' || gameTypeDetails.GameType == 'TIME_CONSTRAINED')) {
-            synchronizeGameSessions(gameTypeDetails.SessionId, (err,_) => {
-               if (err) console.error(err);
-               else this.run();
-            });
-        } else this.run();
+        this.run();
     };
 
     sync() {

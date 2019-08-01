@@ -360,7 +360,6 @@ class AWSFacade {
                 callback(err, data);
             } else {
                 let res = JSON.parse(data);
-                if (typeof res == 'string') res = JSON.parse(res);
                 callback(null, res);
             }
         })

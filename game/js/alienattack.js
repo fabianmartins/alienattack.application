@@ -836,13 +836,22 @@ function WaitForManagerState(game) {
     this.modal.show(modalDialogString, { actionOnClose: "game.modalClose('CLOSE')" });
     let listeners = { messageCallback: WaitForManagerState.prototype.onMessageFromWebSocket.bind(this),
                     closeCallback: WaitForManagerState.prototype.onCloseWebsocket.bind(this) };
-    this.webSocket = new ApiGatewayWebSocket(game.awsfacade, listeners);
-    let status = {
-        'score': 0,
-        'lives': 3,
-        'shots': 0,
-        'level': 1
-    }
+    var self = this;
+    this.webSocket = new ApiGatewayWebSocket(game.awsfacade, listeners, function(err, _) {
+        if (err) {
+            self.modal.close();
+            clearInterval(game.scoreboardInterval);
+            game.scoreboardInterval = setInterval( function() {
+                game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                    let scoreboard = [];
+                    if (err) console.log(err);
+                    else scoreboard = data;
+                    starfield.setScoreboard(scoreboard);
+                })
+            },2000);
+            game.run();
+        }
+    });
     game.publishStatus(function(err, _) {
         if (err) console.log(err);
     });

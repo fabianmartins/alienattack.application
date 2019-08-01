@@ -12,13 +12,17 @@ function ApiGatewayWebSocket(awsFacade, websocketCallbacks, callback) {
             console.log('Error', err);
             if (callback) callback(err);
         } else {
-            console.log('Success getting websocket URL', data);
-            self.URL = data.GetParameterResponse.GetParameterResult.Parameter.Value;
-            self.ws = new WebSocket(self.URL);
-            self.ws.onmessage = ApiGatewayWebSocket.prototype.onMessageListener.bind(self);
-            self.ws.onclose = ApiGatewayWebSocket.prototype.onCloseListener.bind(self);
-            self.ws.onerror = ApiGatewayWebSocket.prototype.onErrorListener.bind(self);
-            ApiGatewayWebSocket.prototype.setURL(self.URL);
+            console.log(data.Error)
+            if (data.Error) callback(data);
+            else {
+                console.log('Success getting websocket URL', data);
+                self.URL = data;
+                self.ws = new WebSocket(self.URL);
+                self.ws.onmessage = ApiGatewayWebSocket.prototype.onMessageListener.bind(self);
+                self.ws.onclose = ApiGatewayWebSocket.prototype.onCloseListener.bind(self);
+                self.ws.onerror = ApiGatewayWebSocket.prototype.onErrorListener.bind(self);
+                ApiGatewayWebSocket.prototype.setURL(self.URL);
+            }
         }
     });
     if (callback) callback();

@@ -299,9 +299,15 @@
                 else sessionName = sessionName + d.substring(2, d.length - 5).replace(/-/g, '').replace(/:/g, '');
                 gameTypeDetails.SessionId = sessionName;
                 document.getElementById('txtSessionName').value = sessionName;
-                Scoreboard.start(gameTypeDetails);
-                if (gameTypeDetails.Synchronized) displayPageAfterGameStartSynchro();
-                else displayPageAfterGameStart();
+                if (gameTypeDetails.Synchronized) {
+                    displayPageAfterGameStartSynchro();
+                    Scoreboard.start(gameTypeDetails, function(err, data) {
+                        document.getElementById('btnSyncGame').disabled = !data;
+                    });
+                } else {
+                    displayPageAfterGameStart();
+                    Scoreboard.start(gameTypeDetails);
+                }
             } else alert('Please choose the game type');
         };
 
