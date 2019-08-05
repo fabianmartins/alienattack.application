@@ -287,7 +287,7 @@ class Scoreboard {
         let synchronizeGameSessions = function(session, callback) {
             let listeners = {
                 messageCallback: (event) => {
-                    if (event.data != 'start') console.alert("Unknown Message received through websocket: ", event);
+                    if (event.data != 'start') console.error("Unknown Message received through websocket: ", event);
                     else console.info("Success sending messages");
                 },
                 closeCallback: (event) => {
