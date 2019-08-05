@@ -1,6 +1,6 @@
 const DEBUG = true;
 const AWS_CONFIG = {
-    "region" : "us-east-1",
-    "API_ENDPOINT" : "https://tcuek3zma1.execute-api.us-east-1.amazonaws.com/prod/v1/",
-    "APPNAME" : "FASTFIX"
+    "region" : "<region where the env is deployed>",
+    "API_ENDPOINT" : "<API Gateway invoke URL>/v1/",
+    "APPNAME" : "<name of the application>"
 }
