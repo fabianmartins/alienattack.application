@@ -13,7 +13,7 @@ function ApiGatewayWebSocket(awsFacade, websocketCallbacks, callback) {
             if (callback) callback(err);
         } else {
             console.log(data.Error)
-            if (data.Error) callback(data);
+            if (data.Error || data == '') callback(new Error('WebSocket Param is EMPTY'));
             else {
                 console.log('Success getting websocket URL', data);
                 self.URL = data;
