@@ -728,17 +728,25 @@ WaitForSessionState.prototype.playConnected = function() {
                     game.moveToState(new SessionErrorState(errorDetails));
                 } else {
                     game.session = self.session;
-                    // start the scoreboard (should this be here?)
-                    clearInterval(game.scoreboardInterval);
-                    game.scoreboardInterval = setInterval( function() {
-                        game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
-                            let scoreboard = [];
-                            if (err) console.log(err);
-                            else scoreboard = data;
-                            starfield.setScoreboard(scoreboard);
-                        })
-                    },2000);
-                    game.run();
+                    console.log(game.session);
+                    if (game.session.Synchronized) {
+                        if (game.session.SynchronizeTime) game.moveToState(new LateStartWarning());
+                        else game.moveToState(new WaitForManagerState(game));
+                    } else {
+                        // This is where we should move to a lobby if the session is synchronized.
+                        // start the scoreboard (should this be here?)
+                        clearInterval(game.scoreboardInterval);
+                        game.scoreboardInterval = setInterval( function() {
+                            game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                                let scoreboard = [];
+                                if (err) console.log(err);
+                                else scoreboard = data;
+                                starfield.setScoreboard(scoreboard);
+                            })
+                        },2000);
+                        game.run();
+                    }
+                    
                 }
             });
         }
@@ -779,6 +787,118 @@ WaitForSessionState.prototype.modalClose = function (msg) {
                 this.playAlone();
         }
     }
+}
+
+function LateStartWarning() {
+    this.modal = new Modal(document.getElementById("modalDialog"));
+    var modalDialogString = 
+        `<h2>AlienAttack:</h2>
+        <p><h3>The game has already begun, do you still wish to join?</h3><p>
+        <br>
+        <input type="button" class="button" value="AGREE" onclick="game.modalClose('JOIN_SESSION')"/>`
+    this.modal.show(modalDialogString, { actionOnClose: "game.modalClose('CLOSE')" });
+}
+
+LateStartWarning.prototype.modalClose = function(msg) {
+    switch(msg) {
+        case "JOIN_SESSION":
+            this.playConnected();
+        break;
+        case "CLOSE":
+            game.moveToState(new WaitForSessionState());
+        break;
+    }
+}
+
+LateStartWarning.prototype.playConnected = function() {
+    console.log("about to play")
+    this.modal.close(() => {
+        clearInterval(game.scoreboardInterval);
+        game.scoreboardInterval = setInterval( function() {
+            game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                let scoreboard = [];
+                if (err) console.log(err);
+                else scoreboard = data;
+                starfield.setScoreboard(scoreboard);
+            })
+        },2000);
+        game.run();
+    })
+}
+
+function WaitForManagerState(game) {
+    this.modal = new Modal(document.getElementById("modalDialog"));
+    var modalDialogString =
+        `<h2>AlienAttack:</h2>
+        <p><h3>Waiting for Manager to start Game</h3></p>
+        <br>
+        <input type="button" class="button" value="Play Alone" onclick="game.modalClose('PLAY_ALONE')"/>`;
+    this.modal.show(modalDialogString, { actionOnClose: "game.modalClose('CLOSE')" });
+    let listeners = { messageCallback: WaitForManagerState.prototype.onMessageFromWebSocket.bind(this),
+                    closeCallback: WaitForManagerState.prototype.onCloseWebsocket.bind(this) };
+    var self = this;
+    this.webSocket = new ApiGatewayWebSocket(game.awsfacade, listeners, function(err, _) {
+        if (err) {
+            self.modal.close();
+            clearInterval(game.scoreboardInterval);
+            game.scoreboardInterval = setInterval( function() {
+                game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                    let scoreboard = [];
+                    if (err) console.log(err);
+                    else scoreboard = data;
+                    starfield.setScoreboard(scoreboard);
+                })
+            },2000);
+            game.run();
+        }
+    });
+    game.publishStatus(function(err, _) {
+        if (err) console.log(err);
+    });
+}
+
+WaitForManagerState.prototype.modalClose = function(msg) {
+    switch(msg) {
+        case 'PLAY_ALONE':
+            this.webSocket.close();
+            this.playAlone();
+        break;
+        case 'CLOSE':
+            game.moveToState(new WaitForSessionState());
+        break;
+    }
+}
+
+WaitForManagerState.prototype.playAlone = function() {
+    this.modal.close( () => {
+        game.session = null;
+        starfield.setScoreboard([]);
+        clearInterval(game.scoreboardInterval);
+        game.run();
+    });
+}
+
+WaitForManagerState.prototype.onMessageFromWebSocket = function(message) {
+    // Need a whole lot more error handling here
+    if (message.data == 'start') {
+        this.modal.close();
+        clearInterval(game.scoreboardInterval);
+        game.scoreboardInterval = setInterval( function() {
+            game.awsfacade.getScoreboard(game.session.SessionId,function(err,data) {
+                let scoreboard = [];
+                if (err) console.log(err);
+                else scoreboard = data;
+                starfield.setScoreboard(scoreboard);
+            })
+        },2000);
+        game.run();
+    }
+}
+
+WaitForManagerState.prototype.onCloseWebsocket = function() {
+    if (event.code == 1001) {
+        this.webSocket.reConnect();
+    } else console.log('WebSocket Closed');
 }
 
 function WelcomeState() {
