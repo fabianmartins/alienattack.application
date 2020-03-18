@@ -1,3 +1,5 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
 
 /**
  * reference: https://github.com/aws-amplify/amplify-js/tree/master/packages/amazon-cognito-identity-js
