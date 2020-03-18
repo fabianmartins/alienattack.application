@@ -1,5 +1,3 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: MIT-0
 const DEBUG = true;
 const AWS_CONFIG = {
     "region" : "<region where the env is deployed>",
