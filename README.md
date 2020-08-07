@@ -1,3 +1,6 @@
+## `IMPORTANT`
+### This repository is **ARCHIVED** and replaced by https://github.com/aws-samples/aws-alien-attack
+
 # AWS Alien Attack App
 
 **DISCLAIMER:** AWS Alien Attack App, and all complementary resources are provided without any guarantees, and you're not recommended to use it for production-grade workloads. The intention is to provide content to build and learn.
